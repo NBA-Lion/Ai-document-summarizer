@@ -33,7 +33,7 @@ except ImportError:
     ANTHROPIC_AVAILABLE = False
 
 try:
-    import google.generativeai as genai
+    from google import genai
     GOOGLE_AVAILABLE = True
 except ImportError:
     GOOGLE_AVAILABLE = False
@@ -767,8 +767,7 @@ elif provider == "openai":
 elif provider == "anthropic":
     anthropic_client = anthropic.Anthropic(api_key=api_key)
 elif provider == "google":
-    genai.configure(api_key=api_key)
-    google_client = genai
+    google_client = genai.Client(api_key=api_key)
 
 
 def create_chat_completion(prompt_or_messages, model: str, temperature: float = 0.3, stream: bool = False, system_prompt: str = None, max_tokens: int = 2048):
@@ -861,12 +860,11 @@ def create_chat_completion(prompt_or_messages, model: str, temperature: float = 
             full_prompt = prompt_or_messages
             if system_prompt:
                 full_prompt = system_prompt + "\n\n" + prompt_or_messages
-            model_gemini = google_client.generate_model(model)
-            return model_gemini.generate_content(
-                full_prompt,
-                generation_config=genai.types.GenerationConfig(
+            return google_client.models.generate_content(
+                model=model,
+                contents=full_prompt,
+                config=genai.types.GenerateContentConfig(
                     temperature=temperature,
-                    stream=stream,
                 )
             )
         else:
@@ -881,12 +879,11 @@ def create_chat_completion(prompt_or_messages, model: str, temperature: float = 
             combined_content.append("Assistant: ")
             full_prompt = "\n\n".join(combined_content)
             
-            model_gemini = google_client.generate_model(model)
-            return model_gemini.generate_content(
-                full_prompt,
-                generation_config=genai.types.GenerationConfig(
+            return google_client.models.generate_content(
+                model=model,
+                contents=full_prompt,
+                config=genai.types.GenerateContentConfig(
                     temperature=temperature,
-                    stream=stream,
                 )
             )
 
@@ -1132,7 +1129,7 @@ with tab_summary:
                         if provider == "anthropic":
                             summary_text = response.content[0].text
                         elif provider == "google":
-                            summary_text = response.text
+                            summary_text = response.candidates[0].content.parts[0].text
                         else:
                             summary_text = response.choices[0].message.content or ""
                         
@@ -1169,7 +1166,7 @@ with tab_summary:
                             if provider == "anthropic":
                                 chunk_sum = response.content[0].text
                             elif provider == "google":
-                                chunk_sum = response.text
+                                chunk_sum = response.candidates[0].content.parts[0].text
                             else:
                                 chunk_sum = response.choices[0].message.content or ""
                             
@@ -1201,7 +1198,7 @@ with tab_summary:
                         if provider == "anthropic":
                             summary_text = response.content[0].text
                         elif provider == "google":
-                            summary_text = response.text
+                            summary_text = response.candidates[0].content.parts[0].text
                         else:
                             summary_text = response.choices[0].message.content or ""
                         
@@ -1285,7 +1282,7 @@ with tab_qa:
 
         try:
             if provider == "google":
-                # Google Gemini handles streaming differently
+                # Google Gemini streaming with new API
                 combined_content = [SYSTEM_PROMPT_QA + "\n\n" + DOCUMENT_BLOCK_TEMPLATE.format(document=relevant_text)]
                 for msg in st.session_state.messages:
                     if msg.get("role") != "system":
@@ -1294,18 +1291,16 @@ with tab_qa:
                 combined_content.append("Assistant: ")
                 full_prompt = "\n\n".join(combined_content)
                 
-                model_gemini = google_client.generate_model(st.session_state.model)
-                response = model_gemini.generate_content(
-                    full_prompt,
-                    generation_config=genai.types.GenerationConfig(
-                        temperature=0.3,
-                        stream=True,
-                    )
-                )
-                
                 with st.chat_message("assistant", avatar="🤖"):
+                    response_stream = google_client.models.generate_content_streaming(
+                        model=st.session_state.model,
+                        contents=full_prompt,
+                        config=genai.types.GenerateContentConfig(
+                            temperature=0.3,
+                        )
+                    )
                     assistant_reply = st.write_stream(
-                        chunk.text for chunk in response
+                        chunk.text for chunk in response_stream
                     )
                     
             elif provider == "anthropic":
