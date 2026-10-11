@@ -9,7 +9,7 @@ Summarize and chat with your documents using multiple AI providers (Groq, OpenAI
 
 ## 🔗 Live Demo
 
-**[👉 Try it now on Streamlit Cloud](https://share.streamlit.io/your-username/ai-document-summarizer)**
+**[👉 Try it now on Streamlit Cloud]([https://share.streamlit.io/your-username/ai-document-summarizer](https://ai-document-summarizer-64dsrqnvjzreb4qutyjxrc.streamlit.app/))**
 
 > ⚠️ You need to configure API keys in the Streamlit Cloud secrets settings.
 
