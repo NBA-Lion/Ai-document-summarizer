@@ -119,10 +119,6 @@ The app automatically splits large documents into chunks for processing:
 
 This project is licensed under the MIT License.
 
-## 👤 Author
-
-- GitHub: [NBA-Lion](https://github.com/NBA-Lion)
-
-## 🙏 Acknowledgments
+##  Acknowledgments
 
 Built with Streamlit, Groq, OpenAI, Google Gemini, and Anthropic.
